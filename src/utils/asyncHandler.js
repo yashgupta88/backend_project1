@@ -2,7 +2,7 @@
 
 
 const asyncHandler=(requestHandler)=>{
-    (req,res,next)=>{
+   return (req,res,next)=>{
         Promise.resolve(requestHandler(req,res,next)).catch((err)=> next(err))
         // next is a callback function that acts like a traffic controller signal , it tells Express to stop executing the current function and move on to the next piece of code in line 
         // Note---> resolve and reject are used while creation of a promise and then and catch are used while consuming a promise 

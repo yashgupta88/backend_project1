@@ -1,4 +1,4 @@
-// user model from the fiven eraser link for model structure for videotube 
+// user model from the gven eraser link for model structure for videotube 
 // https://app.eraser.io/workspace/YtPqZ1VogxGy1jzIDkzj
 
 //  --> there is no need to give a "id" to user or any "field"  beacuse mongodb already generates a unique id 

@@ -13,10 +13,10 @@ app.use(cors({
     credentials:true // and many more properties 
 }))
 // vaise toh hume specifically mention karna hoga ki url kha se aa rha hai apne env ke variable me 
-// but agar hum uski jagah star likh de , toh iska mtlb , har jgh se request allow hai 
+// but agar hum uski jagah "star" likh de , toh iska mtlb , har jgh se request allow hai 
 
 // data backend me bhut jgh se aata hai aur bhut sari forms me aata hai , like forms me , json etc
-// kuch security cheks bhi lagenge ki isse jyada data nhi lenge etc.
+// kuch security checks bhi lagenge ki isse jyada data nhi lenge etc.
 
 
 app.use(express.json({limit:"16kb"}))
@@ -28,7 +28,7 @@ app.use(express.json({limit:"16kb"}))
 // for accepting json files,ab ye parser ka kaam by default ho gya hai 
 
 /*express.json() helps express understand the incoming json request , 
-it is a middleware that parses incoming json data from the request body and stors it in req.body
+it is a middleware that parses incoming json data from the request body and stores it in req.body
 
 without express.json() we cant print req.body 
 
@@ -69,7 +69,7 @@ req -> contains information coming from the client / browser
 res --> res is used to send data to the client
  */
 app.use(cookieParser())  // isme bhi props hoti hai lekin itna use nhi hoti hai 
-export { app }
+
 
 
 /*
@@ -99,3 +99,42 @@ res.send("hitesh")
 
 
 */
+
+// ---------  routes import 
+
+import userRouter from './routes/user.routes.js'
+
+// route declaration 
+
+//  pahle jab hum app.get karke call kar rhe the toh usi me hum routes likh rhe the aur method yani ki 
+// controller bhi hum usi me likh rhe the , 
+// lekin an humsab router aur controller ko alag alag rakha hai 
+// toh ab hume router ko lane ke  liye middleware lana hoga 
+
+app.use("/api/v1/users",userRouter) // jaise hi '/users' hit hoga vaise hi "userRouter" activate ho jaega 
+// jaise hi "/users" hit hoga phir sara control userRouter ke paas chala jaega and then waha par se
+// jo bhi route pe jae aur jo bhi method ya controller chalaye vo route pe depend karta hai 
+
+/** Now URL becomes
+  
+  http://localhost:8000/api/v1/users/register
+
+  aage chalke hum api banaenge , toh standard way me aise hi likhenge , /api then uska version 1,2,3,then route 
+  yhi standard practice hai 
+ 
+ 
+http://localhost:8000/users/register  --> yha pe jake registerUser method call ho jaega 
+
+
+ * similarly
+ * http://localhost:8000/users/login
+ */
+
+//   '/users' is just working like a prefix after it all goes to route 
+
+
+
+
+
+
+export { app }

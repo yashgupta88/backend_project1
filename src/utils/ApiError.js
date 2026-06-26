@@ -29,3 +29,16 @@ class ApiError extends Error{
     }
 }
 export {ApiError}
+
+
+/*
+
+Normal middleware (req,res,next)
+
+Error middleware (err , req , res , next)
+
+if there are four parameters in your middleware , so express makes it as an error handling middleware ,
+that only runs when there is an error 
+it does not treat it as normal middleware 
+
+*/
