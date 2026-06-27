@@ -4,10 +4,28 @@
 
 import { Router } from "express";
 import { registerUser } from "../controllers/user.controller.js";
-
+import { upload } from "../middlewares/multer.middleware.js";
 const router = Router()
 
-router.route("/register").post(registerUser) // is route me "registerUser" method chalega 
+router.route("/register").post(
+    upload.fields([
+        {
+            name:"avatar",
+            maxCount : 1
+        },
+        {
+            name:"coverImage",
+            maxCount : 1
+        }
+    ])    // fields() ,return middleware that processes multiple files associated with the give form fields , many other options like single and array 
+    // single , ek hi file lene ke liye hai 
+    // array , ek hi field me multiple files  lene ke liye hai 
+    // fields , multiple files from different fields
+
+    // in this way we had injected an middleware of multer before going to "registerUser" 
+    ,
+    registerUser
+) // is route me "registerUser" method chalega 
 // router.route("/login").post(login)// for eg , here login method runs 
 
 
@@ -15,11 +33,11 @@ router.route("/register").post(registerUser) // is route me "registerUser" metho
 Now , we are going to use Postman or Thunder Client to test APIs , because these helps to test API 
 without needing a frontend (website or mobile app )
 
-paste that "http link" there and select the type of reques like which typw , get , post , patch aor anything and click on send and then you will get all thing 
+paste that "http link" there and select the type of requets like which type , get , post , patch or anything and click on send and then you will get all thing 
 
 and you will get the reponse you want and also with all information like status code , message etc 
 
-Industry me sabse jyada use hota hai POSTMAN , aur yhi sabse jyada industry me use hota hai 
+Industry me sabse jyada use hota hai POSTMAN 
 and thunder client bhi same hi hota hai , infact thunderclient toh vs code me hi pkugin hota hai 
 and postman bhi vs code me extension me ho jata hai 
 

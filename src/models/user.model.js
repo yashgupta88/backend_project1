@@ -41,7 +41,7 @@ const userSchema=new mongoose.Schema({
         trim:true,// to avoid front and last spaces 
         
     },
-    fullname:{
+    fullName:{
         type:String,
         required:true,
         trim:true,// to avoid front and last spaces 
@@ -83,7 +83,7 @@ userSchema.pre("save", async function(next){  // pre is a hook(middleware) which
 
     // agar password me change hai tabhi dubara encrypt karo , warna nhi karo 
 
-    this.password=bcrypt.hash(this.password,10) // kitne bhi hash rounds de sakte ho , ya by default chod do 
+    this.password=await bcrypt.hash(this.password,10) // kitne bhi hash rounds de sakte ho , ya by default chod do 
     next() // pass flag to next 
 })  
 
