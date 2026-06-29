@@ -7,6 +7,9 @@ import validator from 'validator';
 import {User} from '../models/user.model.js';
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv"
+import 'dotenv/config'
 
 // method for registering user 
 // as we know that whenever we make an app from express we get four parameter out of 
@@ -18,8 +21,38 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 //     })
 // })
 
+const generateAccessAndRefreshTokens = async (userId)=>{
+    try {
+        const user=await User.findById(userId); // Note that this user document already knows that this document object is linked to the User model , 
+        const accessToken=user.generateAccessToken()
+        const refreshToken=user.generateRefreshToken()
+
+        user.refreshToken=refreshToken;
+        // user.save()  // yha pe dikkat ho jaegi kyoki jab bhi hum save karaenge toh pura data hona chahiye , kyoki schema me validatuin laga hua hua 
+        // aur agar hum vapas se ek field deke pura document vapas se save karenge toh validation error aa sakti hai , because mongoose all fields in the document before saving
+        // so we have to only update refreshToken 
+        // so we use validateBeforeSave to save this document without running validation 
+
+        // save is a socument method in mongoose 
+        await user.save({validateBeforeSave : false}) // user document me refreshToken chala gya aur database me bhi save ho jaega 
+
+        return {accessToken , refreshToken}  // returning an object with accesstoken and refreshtoken
+
+        
+    } catch (error) {
+        throw new ApiError(500,"Something went wrong while generating refresh and access token")
+    }
+}
+// we want , when ever user login everytime , its refreshtoken got updated in his documnts thats why 
+// we are saving it 
+
+
+
 
 // Now we are going to write controller to register user 
+
+
+
 
 const registerUser=asyncHandler(async (req,res)=>{
     // steps
@@ -259,4 +292,214 @@ const user = await User.findById(id)
 
 })
 
-export {registerUser}
+const loginUser=asyncHandler(async (req,res)=>{
+    // req.body --> data
+    // username or email
+    // find the user 
+    //password check 
+    // access and refresh token 
+    // send these tokens in cookies 
+
+    const {username,email, password} = req.body;
+
+    if (!username && !email){ // dono nhi hai 
+        throw new ApiError(400,"username or email is required ")
+
+    }
+    // in javascript if an object is like this { username : username } then it can also written as { username }
+
+   
+    const user=await User.findOne(
+        {
+            $or : [{username},{email}]
+        }
+    )
+
+    if(!user){
+        throw new ApiError(404,"User does not exist");
+    }
+
+    const isPasswordValid=await user.isPasswordCorrect(password);
+    
+    if(!isPasswordValid){
+        throw new ApiError(401, "Invalid user Credentials")
+    }
+
+    // now making access and refresh token 
+
+    const {accessToken,refreshToken} =await generateAccessAndRefreshTokens(user._id)
+
+    /*
+    Note --> ok now we had to send data to user because when user login , then 
+    after it fronted needs some data for ex like for welcome user "welcome Yash" etc 
+    so we need to send this document without giving access token and refresh token in the document 
+
+    but we also need to remove password field and refreshtoken field from the document 
+    for that we have to use select method , but select method does not fork on already 
+    fetched document , so we need to fetch again from database and remove that fields and store it somewhere 
+
+    */
+
+    const loggedInUser=await User.findById(user._id).select("-password -refreshToken")
+
+    // now we had to send them into cookies 
+
+    const options={
+        // these options are made to make cookies secure , not modified by frontend , only modified by 
+        // server and many sercurity we can apply like used on same site etc 
+        // frontend does not read cookie , only browser and server can use it 
+        httpOnly : true,
+        secure : false
+    }
+
+    // we can use cookie parser , because we had injected cookie-parser as middleware in app 
+    return res
+    .status(200)
+    .cookie("accessToken",accessToken,options)
+    .cookie("refreshToken",refreshToken,options)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                user:loggedInUser,
+                accessToken,
+                refreshToken
+                // this access token and reponse token for mobile apps or APIs where the client wants to store the token itself 
+                // if we are using HTTP only , its usually unneccsary to also send the tokens in json 
+                // it might be dangerous to send access token and refresh token in frontend
+            },
+            "User logged in Successfully"
+        )
+    )
+
+    
+
+})
+
+const logoutUSer= asyncHandler(async(req,res)=>{
+
+    // Note -->  A refresh token is not meant to let a user log back in , after they have chosen to log out , instead its purpose is to keep an already logged in user authenticated without asking for their password again when the access token expires , 
+
+    // so in logout , we had to delete both acess token and refresh token both , because , if user clicks log out , it meant to be end my session , so the server should invalidate the refresh token 
+    
+    /*
+    suppose user logs in with email and password 
+    server issues AccessToken(15 mins ) and Refresh Tokens (7 days )
+    after 15 mins , the access token expires 
+    the browser sends the refresh token 
+    the server isssues a new access token 
+    the user continues using the app without entering the password again 
+
+     */
+
+    // clear cookies and remove refreshToken from the user model 
+
+    // but in logout , how did i get user document , because there is no information given
+
+    // now i had injected jwt authentication before logout , so we had an access to req.user
+
+    // we can make refresh token of user undefined and also save (validate before save : fasle )
+    // same as added refreshToken , or we can also do
+
+   await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set : { // or we can use unset operator to remove that field
+                refreshToken : undefined
+            }
+        },
+        {
+            new : true // to create a new documnet , by default old document which is before the update is being returned so we use new
+        }
+    )
+
+    const options={
+      // options are needed to clear cookies , because A cookie is defined not just by its name but also 
+      // by its properties like path , secure etc 
+      // using the same options ensure the browser identifies the correct cookie to delete 
+        httpOnly : true,
+        secure : false 
+        // make "secure" it true here as well as in logout method 
+        // i had made it false to get cookies in Postman , beacuse else Postman is not teking cookies
+        // it is taking it only in headers 
+
+        // while development (local host) : secure is false , so cookies work over HTTP
+        // Production(deployed with HTTPS ): secure is true , making the cookies more secure 
+    }
+
+    return res
+    .status(200)
+    .clearCookie("accessToken",options)
+    .clearCookie("refreshToken",options)
+    .json(
+        new ApiResponse(200,{},"User logged Out")
+    )
+
+})
+
+const refreshAccessToken = asyncHandler(async(req,res)=>{
+
+    const incomingRefreshToken=req.cookies?.refreshToken || req.header("Authorization")?.replace("Bearer ","") || req.body.refreshToken
+
+    if(!incomingRefreshToken){
+         throw new ApiError(401 , "Unauthorized access") // Api error sends an api consisting of errors
+    }
+
+    try {
+         const decodedToken=await jwt.verify(incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET)
+         // it just verifies that given token is beging generated by this secret key or not 
+         // and returns decoded token , because user gets encrypted one 
+         // we also need to verify refresh token from the database , that is it same or not , because 
+         // old refreh token may had id of user but not same as current one 
+          // we cannot find the user before decoding the token., because decoding the token give an access to id, or data that we had given while creating the token 
+          // and verify, verifies as well as returns that decoded token 
+    
+         if(!decodedToken){
+            throw new ApiError(401,"Unauthorized request")
+         }
+    
+        const user=await User.findById(decodedToken._id)
+    
+        if(!user){
+            throw new ApiError(401,"Invalid refresh token")
+        }
+    
+        if(incomingRefreshToken !== user.refreshToken){
+            throw new ApiError(401,"Refresh Token is expired or used") // because id is same but refresh token does not match with the current one from databse 
+        }
+    
+         const {accessToken,newRefreshToken} =await generateAccessAndRefreshTokens(user._id)
+    
+         const options={
+          
+            httpOnly : true,
+            secure : false
+        }
+    
+         return res
+         .status(200)
+         .cookie("accessToken",accessToken,options)
+         .cookie("refreshToken",newrefreshToken,options)
+         .json(
+              new ApiResponse(
+                200,
+                {
+                  
+                    accessToken,
+                    refreshToken:newRefreshToken
+                },
+                "Access token refreshed "
+            )
+         )
+    } catch (error) {
+        throw new ApiError(401,error?.message || "Invalid refresh token ")
+    }
+
+})
+
+export {
+    registerUser,
+    loginUser,
+    logoutUSer,
+    refreshAccessToken
+}

@@ -123,7 +123,19 @@ so the function runs before saving the document
   access token aur refresh token , dono ek hi hai "jwt" token but there is difference in their usage 
   we use both in different ways 
 
+  access tokens are short lived and refresh tokens are long lived , access token ko jaldi 
+  expire kar diya jata hai aur refresh token ko thoda long term me 
+
+
    // refresh token me hum information kam rakhte hai 
+
+   jab tak hamare paas access token hai tab tak hum koi bhi feature jaha par authentication ki requirement hai , vhi par hum access kar sakte hai , us resource ko , jaise aap agar 
+   login ho toh file upload kar lo , lekin agar aap ka login session expire ho gya 
+   then apko phir password daalkar login karna padega 
+   yha pe hum use karte hai refresh token , 
+   refresh token hum database me bhi save karte hai aur user ko bhi dete hai 
+   user ko hum validate toh access token se hi karte hai , lekin hum kahte aapko har 
+   baar password dalne ki jarurat nhi hai , aap bas ek baar endpoint hit kar do , agar aapka refresh token aur mere paas jo db me refresh token hai , agar ye same honge toh , mai aapko nya access token de dunga 
   */
 
   userSchema.methods.generateAccessToken=function(){

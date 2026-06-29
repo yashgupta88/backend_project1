@@ -3,9 +3,11 @@
 // now we make routes and export 
 
 import { Router } from "express";
-import { registerUser } from "../controllers/user.controller.js";
+import { loginUser, logoutUSer, registerUser ,refreshAccessToken} from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router()
+
 
 router.route("/register").post(
     upload.fields([
@@ -28,6 +30,14 @@ router.route("/register").post(
 ) // is route me "registerUser" method chalega 
 // router.route("/login").post(login)// for eg , here login method runs 
 
+router.route("/login").post(loginUser)
+
+// secured routes
+router.route("/logout").post( // is route ko hum get me bhi handle kar sakte hai 
+    verifyJWT,
+    logoutUSer)
+
+router.route("/refresh-token").post(refreshAccessToken)
 
 /*
 Now , we are going to use Postman or Thunder Client to test APIs , because these helps to test API 
