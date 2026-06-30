@@ -3,7 +3,9 @@
 // now we make routes and export 
 
 import { Router } from "express";
-import { loginUser, logoutUSer, registerUser ,refreshAccessToken} from "../controllers/user.controller.js";
+import { loginUser, logoutUSer, registerUser ,refreshAccessToken , changeCurrentPassword,getCurrentUser,
+    updateAccountDetails,updateUserAvatar
+} from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router()
@@ -38,6 +40,33 @@ router.route("/logout").post( // is route ko hum get me bhi handle kar sakte hai
     logoutUSer)
 
 router.route("/refresh-token").post(refreshAccessToken)
+
+router.route("/change-current-password").post(
+    verifyJWT ,
+    changeCurrentPassword
+)
+
+router.route("/get-user").post(
+    verifyJWT ,
+    getCurrentUser
+)
+
+router.route("/update-Account-details").post(
+    verifyJWT ,
+    updateAccountDetails
+)
+
+router.route("/update-Avatar").post(
+
+    verifyJWT ,
+    upload.single(
+        {
+            name:"avatar",
+            maxCount : 1
+        }
+    ) ,
+    updateUserAvatar
+)
 
 /*
 Now , we are going to use Postman or Thunder Client to test APIs , because these helps to test API 

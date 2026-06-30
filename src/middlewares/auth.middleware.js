@@ -10,7 +10,7 @@ import { User } from "../models/user.model.js";
 
 export const verifyJWT=asyncHandler(async(req,_,next)=>{  // middleware likhte waqt next likhna
     // res ka koi use nhi tha isliye uski jgh "_" likh diya 
-    // production me asia hi hota hai 
+    // production me aisa hi hota hai 
 
    try {
      // ho sakta hai cookies na aa rhe ho , aur ho sakta hai user hi custom header bhej rha ho 
@@ -18,7 +18,7 @@ export const verifyJWT=asyncHandler(async(req,_,next)=>{  // middleware likhte w
      // toh header me , req.header("Authorization") se hum token accesss karte hai 
      // Postman pe bhi hum custom headers bhej sakte hai , same cookie ka hi work hota hai 
      // Postman me header me jake key-> Authorization and value ->  Bearer <Token>  de sakte hai 
-     // we have to remove Bearer from token to grt it 
+     // we have to remove Bearer from token to get it 
  
      const token =req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")
      
@@ -26,7 +26,8 @@ export const verifyJWT=asyncHandler(async(req,_,next)=>{  // middleware likhte w
          throw new ApiError(401 , "Unauthorized request")
      }
      
-     const decodedToken=jwt.verify(token,process.env.ACCESS_TOKEN_SECRET) // this verifies that access token is created by given id 
+     const decodedToken=jwt.verify(token,process.env.ACCESS_TOKEN_SECRET) // this verifies that access token is created by given secret token  ,
+     // it returns decoded token of the given token , after verifying
  
      const user = await User.findById(decodedToken?._id).select( // because we had given _id while writing jwt.sign
          "-password -refreshToken"
