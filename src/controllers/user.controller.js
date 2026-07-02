@@ -678,6 +678,124 @@ const updateUserCoverImage = asyncHandler(async(req,res)=>{
         new ApiResponse(200,user,"Cover Image updated successfully")
     )
 })
+
+const getUserChannelProfile = asyncHandler(async(req,res)=>{
+
+    /*req.params contains the values that come from the URL path parameters.
+    // body se data tabhi aayega , jab user koi entry dega lekin channel profile , visit karne ke liye 
+    // use koi data dene ki jarrat nhi hai , sirf link pe click karega 
+
+    params → Part of the URL path (identifies a specific resource).
+    query → Optional filters, pagination, search, sorting.
+    body → Data sent to create or update something.
+
+    because the client (frontend/Postman/browser) decides where to send the data.
+
+    */
+
+    const {username} = req.params
+
+    if(!username?.trim()){
+        throw new ApiError(400,"username is missing")
+    }
+
+    // hum chahe to pahle user find kar le phir pipeline bhi likh sakte hai ,ya phir 
+    // aggregate me bhi match karke pipeline likh sakte hai 
+    // note aggregate karne ke baad hamesa arrays aate hai 
+
+    const channel= await User.aggregate([
+        {
+        $match : {
+            username:username?.toLowerCase()  // lowercase is just for safety 
+            // finding document with username 
+        }
+       },
+       {// we are going to take count of subscribers of this document 
+        $lookup:{
+            from: "subscriptions",  // make it to lowercase and plural , as it was stored in database
+            localField:"_id",  // because channels and subscribers both are Users 
+            foreignField:"channel",// subscriber count karne ke liye , ye count kar lo ki vo kitne logo ke channel field me hai me hai  , in subscription_information.txt field 
+            as:"subscribers"
+
+        }
+       },
+       /**A stage receives the current document from the previous stage.
+
+A stage does not receive another collection.
+
+When you use $lookup, MongoDB performs a new query on the collection named in from and merges the result into the current document. 
+
+The two lookups are completely independent:
+
+subscribers → who subscribed to me.
+
+subscribedTo → whom I subscribed to.
+
+*/
+
+        { // now we are going to count , how many you had subscribed
+             $lookup:{
+            from: "subscriptions",  // make it to lowercase and plural , as it was stored in database
+            localField:"_id",
+            foreignField:"subscriber",
+            as:"subscribedTo"
+
+        }
+
+        },
+        {
+        $addFields:{ // to add new fields in user
+            subscribersCount:{
+                $size:"$subscribers" // form subscriber field that we had made in lookup "$" for subscribers
+            },
+            channelsSubscribedToCount:{
+                $size:"$subscribedTo" // form subscribedTo field that we had made in lookup 
+            },
+            isSubscribed:{ // subscribed or not
+                $cond : {
+                    if:{
+                        $in:[req.user?._id,"$subscribers.subscriber"] // if current user exists in subscribers document list or not , subscribers.scbscriber because , subscribers is joined from subscription , which has field subscription
+                        // in is used for both arrays or object, to check present or not 
+                    },
+                    then: true,
+                    else: false
+
+                }
+            },
+           }
+         },
+         { // now we are going to give that data , that we want , means only project that fields 
+            // that we want 
+            // jis jis field ko dena hai , use "1" kar do 
+            $project:{
+                fullName:1,
+                username:1,
+                subscribersCount:1,
+                channelsSubscribedToCount:1,
+                isSubscribed:1,
+                avatar:1,
+                coverImage:1,
+                email:1
+
+            }
+         }
+    ])
+    // now we had injected two new fields to User , that is subscriber and subscribed to 
+
+    // ek baar is channel ko console log karke dekho , ki kya kya aya hai , kya kya nhi aya hai 
+    // aggregate return an array of objects , but here we have only one object , because we had mathched a user , so first object of array is answer
+
+    if(!channel?.length){
+        throw new ApiError(404,"channel does not exists")
+    }
+// we can also return array of object to the frontend or only that object , as we want 
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,channel[0],"User channel fetched successfully")
+    )
+
+})
 export {
     registerUser,
     loginUser,
@@ -687,5 +805,6 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile
 }
