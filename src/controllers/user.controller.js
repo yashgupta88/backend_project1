@@ -10,6 +10,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv"
 import 'dotenv/config'
+import { isObjectIdOrHexString } from "mongoose";
 
 
 // method for registering user 
@@ -709,13 +710,13 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
             username:username?.toLowerCase()  // lowercase is just for safety 
             // finding document with username 
         }
-       },
+       }, // now we are in this document 
        {// we are going to take count of subscribers of this document 
         $lookup:{
             from: "subscriptions",  // make it to lowercase and plural , as it was stored in database
             localField:"_id",  // because channels and subscribers both are Users 
             foreignField:"channel",// subscriber count karne ke liye , ye count kar lo ki vo kitne logo ke channel field me hai me hai  , in subscription_information.txt field 
-            as:"subscribers"
+            as:"subscribers"  // store it as 
 
         }
        },
@@ -754,8 +755,10 @@ subscribedTo → whom I subscribed to.
             isSubscribed:{ // subscribed or not
                 $cond : {
                     if:{
-                        $in:[req.user?._id,"$subscribers.subscriber"] // if current user exists in subscribers document list or not , subscribers.scbscriber because , subscribers is joined from subscription , which has field subscription
+                        $in:[req.user?._id,"$subscribers.subscriber"] // if current user exists in subscribers document list or not , subscribers.scbscriber because , subscribers is joined from subscription , which has field subscriber
                         // in is used for both arrays or object, to check present or not 
+                        // Note , requesting user and the url user can be different 
+                        // for eg , i , yash  going to check "chai" channel subscriber count and many other things 
                     },
                     then: true,
                     else: false
@@ -796,6 +799,74 @@ subscribedTo → whom I subscribed to.
     )
 
 })
+
+// get users watch history 
+// there is pipeline inside a pipeline beacuse , users watchhistory contains multiple videos documents 
+// and for each video document we had to have a owner("user") document as well, so we had to make a 
+// pipeline inside a pipeline (sub-pipeline)
+
+// note --by default data base me object id hoti hai vo return hoti hai string type me , but mongoose use handle kar leta hai , isisliye hum direct id paas kar pate hai 
+
+// note 2--> aggregation pipeline ka code mongoose se hote hue nhi balki directly jata hai , 
+// thats why hume database me model ka name , jaisa database me save hai vaise dena padta hai 
+// and vaise hi hume user id ko string se Objectid me convert karke dena padega 
+
+const getWatchHistory = asyncHandler(async(req,res)=>{
+
+    const user=await User.aggregate([
+        {
+            $match:{
+                _id: new mongoose.Types.ObjectId(req.user._id) // to convert string to object id
+            },
+            $lookup:{
+                from:"videos",
+                localField:"watchHistory",
+                foreignField:"_id",
+                as:"watchHistory",
+                 // now we had many documents of this user , and these documents are of his watch history videos, now to make sub-pipeline of owner , we can use both pipeline or populate aise hi hum further kitni bhi pipelines lga sakte hai 
+                 pipeline:[
+
+                    {
+                        $lookup:{
+                            from:"users",
+                            localField:"owner",
+                            foreignField:"_id",
+                            as:"owner",
+                            pipeline:[
+                                {
+                                    $project:{
+                                        fullName:1,
+                                        username:1,
+                                        avatar:1
+                                    }
+                                }
+                            ]
+
+                        }
+                    },
+                    {
+                        $addFields:{ // to change from array to objects 
+                            owner:{ // owner ko hi rewrite kar diya 
+                                $first:"$owner"
+                            }
+                        }
+                    }
+                 ]
+
+            },
+
+
+        }
+    ])
+
+    return res.status(200)
+    .json(
+        new ApiResponse(
+            200,user[0].watchHistory,"watch history fetched successfully "
+        )
+    )
+})
+
 export {
     registerUser,
     loginUser,
@@ -806,5 +877,6 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory
 }
