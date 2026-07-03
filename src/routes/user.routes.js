@@ -3,11 +3,21 @@
 // now we make routes and export 
 
 import { Router } from "express";
-import { loginUser, logoutUSer, registerUser ,refreshAccessToken , changeCurrentPassword,getCurrentUser,
-    updateAccountDetails,updateUserAvatar
+import { loginUser,
+    logoutUSer,
+    registerUser ,
+    refreshAccessToken ,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUserCoverImage,
+    getUserChannelProfile,
+    getWatchHistory
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verify } from "jsonwebtoken";
 const router = Router()
 
 
@@ -41,32 +51,41 @@ router.route("/logout").post( // is route ko hum get me bhi handle kar sakte hai
 
 router.route("/refresh-token").post(refreshAccessToken)
 
-router.route("/change-current-password").post(
+router.route("/change-password").post(
     verifyJWT ,
     changeCurrentPassword
 )
 
-router.route("/get-user").post(
+router.route("/current-user").get( // here we are not getting any data , so we used get 
     verifyJWT ,
     getCurrentUser
 )
 
-router.route("/update-Account-details").post(
+router.route("/update-account").patch(  // post karenge toh sari details update ho jaengi , isliye patch karo
     verifyJWT ,
     updateAccountDetails
 )
 
-router.route("/update-Avatar").post(
+router.route("/avatar").patch(
 
     verifyJWT ,
-    upload.single(
-        {
-            name:"avatar",
-            maxCount : 1
-        }
-    ) ,
+    upload.single("avatar"),
     updateUserAvatar
 )
+
+router.route("/cover-image").patch(
+    verifyJWT,
+    upload.single("coverImage"),
+    updateUserCoverImage
+)
+
+router.route("/c/:username") // we use /c/ because we are taking data from params and username because we are taking username 
+.get(verifyJWT,
+   getUserChannelProfile 
+)
+// jab user kuch bhej rha ho tab "post" use karo 
+router.route("/history").get(verifyJWT,getWatchHistory)
+
 
 /*
 Now , we are going to use Postman or Thunder Client to test APIs , because these helps to test API 
