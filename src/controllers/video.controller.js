@@ -367,6 +367,61 @@ const deleteVideo = asyncHandler(async(req,res)=>{
     return res.status(200).json(new ApiResponse(200,{},"Deletion of Video Successful"))
 })
 
+const togglePublishStatus = asyncHandler(async(req,res)=>{
+
+    const {videoId} = req.params
+
+    if( ! mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiError(400,"Invalid video Id")
+    }
+
+    const video =await Video.findById(videoId)
+
+    if(! video){
+        throw new ApiError(404 , "Video Does Not Exist")
+    }
+
+    const userId = req.user?._id
+
+    if(userId.toString() !== video.owner.toString()){
+        throw new ApiError(403, "Unauthorized Access");
+    }
+
+    video.isPublished = !video.isPublished
+   await  video.save({validateBeforeSave:false})
+
+   return res.status(200).json(new ApiResponse(200,{isPublished:video.isPublished},"Publish Status Changed successfully"))
+
+
+})
+
+const incrementViews = asyncHandler(async(req,res)=>{
+
+    const {videoId} = req.params
+
+    if(! mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiError(400,"Invalid Video Id")
+    }
+
+   const video = await Video.findByIdAndUpdate(
+    videoId,
+    {
+        $inc:{
+            views:1
+        }
+    },
+    {
+        new:true
+    }
+   )
+
+   if(! video){
+    throw new ApiError(404 , "Video Not Found")
+   }
+
+    return res.status(200).json(new ApiResponse(200,{views:video.views},"views incremented SuccessFully"))
+})
+
 
 
 export {uploadVideo ,
@@ -374,5 +429,7 @@ export {uploadVideo ,
     getAllVideos,
     getVideosOfUser,
     updateVideo,
-    deleteVideo
+    deleteVideo,
+    togglePublishStatus,
+    incrementViews
 }
