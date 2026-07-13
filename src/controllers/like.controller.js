@@ -1,7 +1,4 @@
-// toggleVideoLike   videoid
-// toggle comment like    comment id 
-// toggle tweet like    tweet id 
-// get liked videos    user id 
+
 
 import { asyncHandler } from "../utils/asyncHandler.js";
 import mongoose from "mongoose";
@@ -121,7 +118,7 @@ const getLikedVideos= asyncHandler(async(req,res)=>{
 
     const userId=req.user._id
 
-    const {page=1,limit=10}=req.query  // query parameters comes from frontend 
+    const {page=1,limit=10}=req.query  
 
     const aggregate= Like.aggregate([
         {
@@ -203,7 +200,7 @@ const getLikedVideos= asyncHandler(async(req,res)=>{
     }
     const Likedvideos= await Like.aggregatePaginate(aggregate,options);
 
-    // Note: aggregate return array of docs and aggregate Paginate returns Object containing docs + pagination Information 
+  
 
     return res.status(200).json(new ApiResponse(200,Likedvideos,"All liked videos Fetched Successfully"))
 })

@@ -1,26 +1,17 @@
-// Error is a class in node js , read documentation 
-//  const err = new Error('The message');
-// error class in node js has constructor which takes message 
-//  const cause = new Error('The remote HTTP server responded with a 500 status');
-
-//   utility for error messages 
 
 
 class ApiError extends Error{
     constructor(statusCode,message="Something went wrong",errors=[],stack=""){
-        super(message) // overwrites message from parent Error object
-       // super  for calling and taking properties of parent object 
-        // and message tells what error has been happend
+        super(message) 
         this.statusCode=statusCode
-        this.message=message // no need , already overwritten because in parent class 
+        this.message=message 
         this.data=null
         this.success=false
         this.errors=errors
 
 
         if(stack){
-            this.stack=stack   // A stack trace is the history of functions calls that led to the error 
-            // or it tells , at which part there is error , where did error happen 
+            this.stack=stack  
         }
         else{
             Error.captureStackTrace(this,this.constructor)
@@ -30,15 +21,3 @@ class ApiError extends Error{
 }
 export {ApiError}
 
-
-/*
-
-Normal middleware (req,res,next)
-
-Error middleware (err , req , res , next)
-
-if there are four parameters in your middleware , so express makes it as an error handling middleware ,
-that only runs when there is an error 
-it does not treat it as normal middleware 
-
-*/

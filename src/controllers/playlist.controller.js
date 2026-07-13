@@ -8,7 +8,7 @@ import { Video } from "../models/video.model.js";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2.js";
 import { User } from "../models/user.model.js";
 
-// create an empty playlist and add video later 
+
 
 const createPlaylist = asyncHandler(async(req , res)=>{
 
@@ -27,7 +27,7 @@ const createPlaylist = asyncHandler(async(req , res)=>{
     return res.status(200).json(new ApiResponse(200,playlist,"Playlist Created SuccessFully"))
 })
 const addVideoToPlaylist = asyncHandler(async(req,res)=>{
-    // taking video id and user id and playlist id
+    
     const {playlistId , videoId} = req.params
 
     if(! mongoose.Types.ObjectId.isValid(playlistId)){
@@ -53,7 +53,7 @@ const addVideoToPlaylist = asyncHandler(async(req,res)=>{
     const updatedPlaylist = await Playlist.findByIdAndUpdate(
         playlistId,
         {
-            $addToSet:{ // for pushing
+            $addToSet:{ 
                 videos:videoId
             }
         },{
@@ -195,7 +195,7 @@ const getUserAllPlaylists = asyncHandler(async(req,res)=>{
 
 })
 const updatePlaylist = asyncHandler(async(req,res)=>{
-    // login needed 
+  
 
     
     const {name,description} = req.body
@@ -270,7 +270,7 @@ const removeVideoFromPlaylist = asyncHandler(async(req,res)=>{
     const newPlaylist = await Playlist.findByIdAndUpdate(
         playlistId,
         {
-            $pull:{ // removing video
+            $pull:{ 
                 videos:videoId
             }
         },
@@ -307,13 +307,7 @@ const deletePlaylist = asyncHandler(async(req,res)=>{
 
 
 })
-// create playlist
-//get user playlist  // user Id
-// get PlaylistBy Id
-// add video to playlist  // playlist id , user id 
-// remove video from playlist
-// delete playlist 
-// update playlist 
+
 export {
     createPlaylist,
     addVideoToPlaylist,

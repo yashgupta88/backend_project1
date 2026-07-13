@@ -11,7 +11,7 @@ router.route("/upload-video").post(
     ]),
     uploadVideo
 )
-router.route("/getVideoById/:videoId").get( // taking videoId as a parameter 
+router.route("/getVideoById/:videoId").get( 
     verifyJWT,
     getVideoById
 )

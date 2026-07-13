@@ -1,6 +1,4 @@
-// toggle Subscription 
-// get user subscribers
-// get subscribed channels 
+
 
 import { Subscription } from "../models/subscription.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -13,7 +11,7 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2.js";
 import { User } from "../models/user.model.js";
 
 const toggleSubscription = asyncHandler(async(req,res)=>{
-    const {channelId} = req.params  // channel
+    const {channelId} = req.params  
 
     if(! mongoose.Types.ObjectId.isValid(channelId)){
             throw new ApiError(400,"Invalid channel Id")

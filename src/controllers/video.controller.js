@@ -1,15 +1,4 @@
-// video upload from channel
-// upfate details like thumbnail,title,description etc
-// delete video 
 
-/**
- * uploadVideo
-getAllVideos (with pagination, search, and sorting)
-getVideoById
-updateVideo
-updateVideoThumbnail
-deleteVideo
- */
 
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -82,7 +71,7 @@ const uploadVideo = asyncHandler (async (req , res)=>{
 })
 
 const getVideoById = asyncHandler(async(req,res)=>{
-    // video id is coming from url 
+ 
     const {videoId}=req.params
 
     const video=await Video.aggregate([
@@ -161,10 +150,10 @@ const getVideoById = asyncHandler(async(req,res)=>{
     )
 })
 
-const getAllVideos = asyncHandler(async(req,res)=>{  // all videos , not a specific channel videos 
+const getAllVideos = asyncHandler(async(req,res)=>{ 
 
-    const aggregate = Video.aggregate([ // remove await because , aggreagte paginate needs aggregate object 
-        // not array of docs , it needs before processing , then it process and paginate alongwith 
+    const aggregate = Video.aggregate([ 
+       
         {
             $match:{
                 isPublished: true
@@ -173,7 +162,7 @@ const getAllVideos = asyncHandler(async(req,res)=>{  // all videos , not a speci
         {
             $sort:{
                 createdAt:-1
-                // Note "sort" sort docs in ascending order , when we give 1 and in descending order , when -1
+               
             }
         },
         {
@@ -210,9 +199,6 @@ const getAllVideos = asyncHandler(async(req,res)=>{  // all videos , not a speci
     }
 
     const video= await Video.aggregatePaginate(aggregate,options);
-
-    // video contains docs in which all docs of 10 videos are there and further the information of pages , like 
-    // limit ,nextpage etc .. 
     
 
     return res.status(200).json(
@@ -222,7 +208,7 @@ const getAllVideos = asyncHandler(async(req,res)=>{  // all videos , not a speci
 
 })
 
-// taking user Id by frontend to take all of its videos 
+
 const getVideosOfUser = asyncHandler(async(req,res)=>{
     const {userId} = req.params
 
@@ -241,7 +227,6 @@ const getVideosOfUser = asyncHandler(async(req,res)=>{
 
 })
 
-// update video details like thumbnail ,  title , description
 
 const updateVideo = asyncHandler(async(req,res)=>{
 
@@ -258,7 +243,7 @@ const updateVideo = asyncHandler(async(req,res)=>{
     }
    
 
-    if(req.user._id.toString() !== video.owner.toString()){  // ownership check is required 
+    if(req.user._id.toString() !== video.owner.toString()){  
         throw new ApiError(403,"Unauthorized access")
     }
     
@@ -301,9 +286,6 @@ const updateVideo = asyncHandler(async(req,res)=>{
         )
     
 
-    // findbyIdandupdate , only finds by id and update and also can return new updated document
-    // updateone , updates the first document matching with given condition and return only updated information
-
 
     return res.status(200).json(new ApiResponse(200,updatedVideo,"Updated Successfully"))
 
@@ -330,11 +312,7 @@ const deleteVideo = asyncHandler(async(req,res)=>{
           throw new ApiError(403,"Unauthorized access")
     }
 
-    // note --> when we use findByIdAndDelete() , then Mongoose first finds the document , keeps a copy in 
-    // memory , then deletes it from the database and finally returns the copy 
-    // and that copied document helps to further delete the files from cloudinary or else 
-
-    // deleteOne deletes the first document matching the filter and returns only the deleted information
+    
 
    const deletedVideoDoc= await Video.findByIdAndDelete(
         videoId

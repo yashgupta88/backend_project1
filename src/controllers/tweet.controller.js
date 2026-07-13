@@ -1,7 +1,4 @@
-// create tweet
-// get user tweet
-// update tweet
-// delete tweet 
+
 
 import mongoose from "mongoose";
 import { ApiResponse } from "../utils/ApiResponse.js";
