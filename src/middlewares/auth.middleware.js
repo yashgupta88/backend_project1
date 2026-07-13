@@ -1,4 +1,4 @@
-// to verify user is there or not 
+
 
 import jwt from "jsonwebtoken";
 import { ApiError } from "../utils/ApiError.js";
